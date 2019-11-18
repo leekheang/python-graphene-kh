@@ -3,6 +3,10 @@ import uuid
 import json
 from datetime import datetime
 
+class Post(graphene.ObjectType):
+    title = graphene.String()
+    content = graphene.String()
+    
 class User(graphene.ObjectType):
     id = graphene.ID(default_value=uuid.uuid4())
     username = graphene.String()
@@ -26,7 +30,7 @@ class Query(graphene.ObjectType):
             User( id="2", username="nat", created_at=datetime.now())
         ][:limit]
 
-class Create_User(graphene.Mutation):
+class CreateUser(graphene.Mutation):
     user = graphene.Field(User)
     
     class Arguments:
@@ -34,10 +38,24 @@ class Create_User(graphene.Mutation):
     
     def mutate(self, info ,username):
         user = User(username=username)
-        return Create_User(user=user)
+        return CreateUser(user=user)
+
+class CreatePost(graphene.Mutation):
+
+    post = graphene.Field(Post)
+    class Arguments:
+        title = graphene.String()
+        content = graphene.String()
+
+    def mutate(self, info, title, content ):
+        if info.context.get('is_anonymous'):
+            raise Exception("Not Authenticated")
+        post = Post(title=title, content=content)
+        return CreatePost(post=post)
 
 class Mutation(graphene.ObjectType):
-    create_user = Create_User.Field()
+    create_user = CreateUser.Field()
+    create_post = CreatePost.Field()
 
 
 
@@ -46,15 +64,25 @@ schema = graphene.Schema(query=Query , mutation=Mutation)
 result = schema.execute(
 
     '''    
-        mutation ($username : String) {
-            createUser(username: $username){
-               user {
-                    id
-                    username
-                    createdAt
-               }
+        # mutation ($username : String) {
+        #     createUser(username: $username){
+        #        user {
+        #             id
+        #             username
+        #             createdAt
+        #        }
+        #     }
+        # }
+
+        mutation {
+            createPost(title: "herry Poter", content: "google.com"){
+                post{
+                    title
+                    content
+                }
             }
         }
+
         # query getUsersQuery($limit : Int) {
         #     users(limit: $limit){         
         #         id
@@ -65,7 +93,8 @@ result = schema.execute(
         
     ''',
     # variable_values={'limit': 2}
-    variable_values={'username': 'yong'}
+    # variable_values={'username': 'yong'}
+    context = { 'is_anonymous': True }
 )
 
 dicResult  = dict(result.data.items())
