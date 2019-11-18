@@ -11,6 +11,10 @@ class User(graphene.ObjectType):
     id = graphene.ID(default_value=uuid.uuid4())
     username = graphene.String()
     created_at = graphene.DateTime(default_value=datetime.now())
+    avatar_url = graphene.String()
+
+    def resolve_avatar_url(self, info):
+        return 'http://www.image.com/{}/{}'.format(self.username, self.id)
 
 
 class Query(graphene.ObjectType):
@@ -74,14 +78,14 @@ result = schema.execute(
         #     }
         # }
 
-        mutation {
-            createPost(title: "herry Poter", content: "google.com"){
-                post{
-                    title
-                    content
-                }
-            }
-        }
+        # mutation {
+        #     createPost(title: "herry Poter", content: "google.com"){
+        #         post{
+        #             title
+        #             content
+        #         }
+        #     }
+        # }
 
         # query getUsersQuery($limit : Int) {
         #     users(limit: $limit){         
@@ -90,11 +94,20 @@ result = schema.execute(
         #         createdAt
         #     }
         # }
+       
+        {
+            users{         
+                id
+                username
+                createdAt
+                avatarUrl
+            }
+        }
         
     ''',
     # variable_values={'limit': 2}
     # variable_values={'username': 'yong'}
-    context = { 'is_anonymous': True }
+    # context = { 'is_anonymous': True }
 )
 
 dicResult  = dict(result.data.items())
